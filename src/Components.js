@@ -13,31 +13,37 @@ class SignUpForm extends React.Component {
     fieldErrors: {}
   }
 
-  onInputChange = (evt) => {
+  onInputChange = ({ name, value, error }) => {
     const fields = Object.assign({}, this.state.fields);
-    fields[evt.target.name] = evt.target.value;
-    this.setState({ fields: fields });
+    const fieldErrors = Object.assign({}, this.state.fieldErrors);
+
+    fields[name] = value;
+    fieldErrors[name] = error;
+
+    this.setState({ fields, fieldErrors });
   }
 
-  validate = (person) => {
-    const errors = {};
-    if(!person.name) errors.name='Name is required.';
-    if(!person.email) errors.email='Email is required.';
-    if(person.email && !isEmail(person.email)) errors.email='Enter valid email.';
-    return errors;
+  validate = () => {
+    const person = this.state.fields;
+    const fieldErrors = this.state.fieldErrors;
+    // Check keys in fieldErrors & construct new array if key has value
+    const errMessages = Object.keys(fieldErrors).filter((key) => fieldErrors[key]);
+
+    if (!person.name) return true;
+    if (!person.email) return true;
+    // Check if errors present
+    if (errMessages.length) return true;
+
+    return false;
   }
 
   onFormSubmit = (evt) => {
     const people = [...this.state.people];
     const person = this.state.fields;
-
-    // Validate fields
-    const fieldErrors = this.validate(person);
-    this.setState({ fieldErrors });
     evt.preventDefault();
 
     // Exit if fieldErrors
-    if(Object.keys(fieldErrors).length) return;
+    if (this.validate()) return;
 
     this.setState({
       people: people.concat(person), // Add person to people
@@ -54,24 +60,24 @@ class SignUpForm extends React.Component {
       <div>
         <h1>Sign Up App</h1>
         <form onSubmit={this.onFormSubmit}>
-          <input
+          <Field
             placeholder='Name'
             name='name'
             value={this.state.fields.name}
+            validate={value => value ? false : 'Name is required.'}
             onChange={this.onInputChange}
           />
-          <span style={{ color: 'red' }}>{this.state.fieldErrors.name}</span>
           <br/>
-          <input
+          <Field
             placeholder='Email'
             name='email'
             value={this.state.fields.email}
+            validate={value => isEmail(value) ? false : 'Invalid email.'}
             onChange={this.onInputChange}
           />
-          <span style={{ color: 'red' }}>{this.state.fieldErrors.email}</span>
           <br/>
           <input
-            type='submit'
+            type='submit' disabled={this.validate()}
           />
         </form>
 
@@ -88,3 +94,41 @@ class SignUpForm extends React.Component {
 
 
 export default SignUpForm;
+
+
+class Field extends React.Component {
+
+  state = {
+    value: this.props.value,
+    error: false
+  }
+
+  // Enables clearing of the fields after successful submission
+  static getDerivedStateFromProps(nextProps) {
+    return { value: nextProps.value }
+  }
+
+  onChange = (evt) => {
+    const name = this.props.name;
+    const value = evt.target.value;
+    const error = this.props.validate ? this.props.validate(value) : false;
+
+    this.setState({ value, error });
+
+    // Pass values to the form onInputChange
+    this.props.onChange({ name, value, error })
+  }
+
+  render() {
+    return (
+      <>
+        <input
+          placeholder={this.props.placeholder}
+          value={this.state.value}
+          onChange={this.onChange}
+        />
+        <span style={{ color: 'red' }}>{this.state.error}</span>
+      </>
+    )
+  }
+}
