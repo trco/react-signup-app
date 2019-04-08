@@ -1,5 +1,7 @@
 import React from 'react';
 
+import isEmail from 'validator/lib/isEmail';
+
 class SignUpForm extends React.Component {
 
   state = {
@@ -7,7 +9,8 @@ class SignUpForm extends React.Component {
     fields : {
       name: '',
       email: ''
-    }
+    },
+    fieldErrors: {}
   }
 
   onInputChange = (evt) => {
@@ -16,9 +19,33 @@ class SignUpForm extends React.Component {
     this.setState({ fields: fields });
   }
 
+  validate = (person) => {
+    const errors = {};
+    if(!person.name) errors.name='Name is required.';
+    if(!person.email) errors.email='Email is required.';
+    if(person.email && !isEmail(person.email)) errors.email='Enter valid email.';
+    return errors;
+  }
+
   onFormSubmit = (evt) => {
-    const people = [...this.state.people, this.state.fields];
-    this.setState({ people: people, fields: { name: '', email: ''} });
+    const people = [...this.state.people];
+    const person = this.state.fields;
+
+    // Validate fields
+    const fieldErrors = this.validate(person);
+    this.setState({ fieldErrors });
+    evt.preventDefault();
+
+    // Exit if fieldErrors
+    if(Object.keys(fieldErrors).length) return;
+
+    this.setState({
+      people: people.concat(person), // Add person to people
+      fields: { // Reset fields
+        name: '',
+        email: ''
+      }
+    });
     evt.preventDefault();
   }
 
@@ -33,12 +60,16 @@ class SignUpForm extends React.Component {
             value={this.state.fields.name}
             onChange={this.onInputChange}
           />
+          <span style={{ color: 'red' }}>{this.state.fieldErrors.name}</span>
+          <br/>
           <input
             placeholder='Email'
             name='email'
             value={this.state.fields.email}
             onChange={this.onInputChange}
           />
+          <span style={{ color: 'red' }}>{this.state.fieldErrors.email}</span>
+          <br/>
           <input
             type='submit'
           />
