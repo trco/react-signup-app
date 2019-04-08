@@ -3,18 +3,22 @@ import React from 'react';
 class SignUpForm extends React.Component {
 
   state = {
-    names: []
+    people: [],
+    fields : {
+      name: '',
+      email: ''
+    }
+  }
+
+  onInputChange = (evt) => {
+    const fields = Object.assign({}, this.state.fields);
+    fields[evt.target.name] = evt.target.value;
+    this.setState({ fields: fields });
   }
 
   onFormSubmit = (evt) => {
-    // Get value from input field
-    const name = this.refs.name.value;
-    // Construct new names
-    const names = [...this.state.names, name];
-    // Update state
-    this.setState({ names: names });
-    // Clear input field
-    this.refs.name.value = '';
+    const people = [...this.state.people, this.state.fields];
+    this.setState({ people: people, fields: { name: '', email: ''} });
     evt.preventDefault();
   }
 
@@ -25,7 +29,15 @@ class SignUpForm extends React.Component {
         <form onSubmit={this.onFormSubmit}>
           <input
             placeholder='Name'
-            ref='name'
+            name='name'
+            value={this.state.fields.name}
+            onChange={this.onInputChange}
+          />
+          <input
+            placeholder='Email'
+            name='email'
+            value={this.state.fields.email}
+            onChange={this.onInputChange}
           />
           <input
             type='submit'
@@ -34,8 +46,8 @@ class SignUpForm extends React.Component {
 
         <ul>
           <h3>Participants</h3>
-          {this.state.names.map((name) => {
-            return <li>{name}</li>;
+          {this.state.people.map(({name, email}, i) => {
+            return <li key={i}>{name} {email}</li>;
           })}
         </ul>
       </div>
