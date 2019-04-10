@@ -8,7 +8,9 @@ class SignUpForm extends React.Component {
     people: [],
     fields : {
       name: '',
-      email: ''
+      email: '',
+      department: '',
+      course: ''
     },
     fieldErrors: {}
   }
@@ -19,6 +21,11 @@ class SignUpForm extends React.Component {
 
     fields[name] = value;
     fieldErrors[name] = error;
+
+    // Reset course if department is changed
+    if (name === 'department' && this.state.fields.department !== value) {
+      fields['course'] = '';
+    }
 
     this.setState({ fields, fieldErrors });
   }
@@ -31,6 +38,8 @@ class SignUpForm extends React.Component {
 
     if (!person.name) return true;
     if (!person.email) return true;
+    if (!person.department) return true;
+    if (!person.course) return true;
     // Check if errors present
     if (errMessages.length) return true;
 
@@ -49,7 +58,9 @@ class SignUpForm extends React.Component {
       people: people.concat(person), // Add person to people
       fields: { // Reset fields
         name: '',
-        email: ''
+        email: '',
+        department: '',
+        course: ''
       }
     });
     evt.preventDefault();
@@ -76,6 +87,12 @@ class SignUpForm extends React.Component {
             onChange={this.onInputChange}
           />
           <br/>
+          <CourseSelect
+            onChange={this.onInputChange}
+            department={this.state.fields.department}
+            course={this.state.fields.course}
+          />
+          <br/>
           <input
             type='submit' disabled={this.validate()}
           />
@@ -83,8 +100,8 @@ class SignUpForm extends React.Component {
 
         <ul>
           <h3>Participants</h3>
-          {this.state.people.map(({name, email}, i) => {
-            return <li key={i}>{name} {email}</li>;
+          {this.state.people.map(({name, email, department, course}, i) => {
+            return <li key={i}>{name} {email} - { department } / { course }</li>;
           })}
         </ul>
       </div>
@@ -92,9 +109,7 @@ class SignUpForm extends React.Component {
   }
 }
 
-
 export default SignUpForm;
-
 
 class Field extends React.Component {
 
@@ -116,7 +131,7 @@ class Field extends React.Component {
     this.setState({ value, error });
 
     // Pass values to the form onInputChange
-    this.props.onChange({ name, value, error })
+    this.props.onChange({ name, value, error });
   }
 
   render() {
@@ -130,5 +145,94 @@ class Field extends React.Component {
         <span style={{ color: 'red' }}>{this.state.error}</span>
       </>
     )
+  }
+}
+
+const Courses = {
+  depOne: [
+    'Course #1',
+    'Course #2',
+    'Course #3',
+  ],
+  depTwo: [
+    'Course #4',
+    'Course #5',
+    'Course #6',
+  ]
+}
+
+class CourseSelect extends React.Component {
+
+  state = {
+    department: null,
+    course: null,
+    courses: []
+  }
+
+  static getDerivedStateFromProps(update) {
+    return {
+      department: update.department,
+      course: update.course
+    };
+  }
+
+  onSelectDepartment = (evt) => {
+    const department = evt.target.value;
+    const courses = department ? Courses[department] : null;
+    const course = null;
+
+    this.setState({
+      department: department,
+      courses: courses,
+      // Reset course in state
+      course: course
+    });
+
+    // Pass values to the form onInputChange
+    this.props.onChange({ name: 'department', value: department });
+  }
+
+  renderDepartmentSelect = () => {
+    return (
+      <select
+        onChange={this.onSelectDepartment}
+        value={this.state.department || ''}
+      >
+        <option value=''>Which department?</option>
+        <option value='depOne'>Department #1</option>
+        <option value='depTwo'>Department #2</option>
+      </select>
+    );
+  }
+
+  onSelectCourse = (evt) => {
+    const course = evt.target.value;
+    this.setState({ course: course });
+    // Pass values to the form onInputChange
+    this.props.onChange({ name: 'course', value: course });
+  }
+
+  renderCourseSelect = () => {
+    return (
+      <select
+        onChange={this.onSelectCourse}
+        value={this.state.course || ''}
+      >
+        <option value='' key='none'>Which course?</option>
+        {this.state.courses ? this.state.courses.map((course, i) => {
+          return <option key={i} value={course}>{course}</option>;
+        }) : false }
+      </select>
+    );
+  }
+
+  render() {
+    return (
+      <div>
+        {this.renderDepartmentSelect()}
+      <br/>
+        {this.renderCourseSelect()}
+      </div>
+    );
   }
 }
